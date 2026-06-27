@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：R4 完成，准备进入 R5
+- 阶段：R5 完成，准备进入 R6
 - 进行中 step：无
-- **下一步：R5 — 组合层与波动率目标**
+- **下一步：R6 — 稳健性终检与 verifier 提交**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -88,6 +88,10 @@
   - 完成时间：2026-06-27T14:28:20Z
   - 产物：research-only `volatility_target_trend`、`regime_switch_existing`、同口径 walk-forward/verifier 报告、`reports/r4_*.json`。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；两个新增家族均完成参数试验次数记录与 verifier 标记。
+- R5 — 组合层与波动率目标
+  - 完成时间：2026-06-27T14:33:46Z
+  - 产物：research-only inverse-volatility portfolio、组合方向性敞口 cap、segment-level OOS portfolio metrics、`reports/r5_portfolio.json`。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；组合按 25% 方向性敞口上限缩放并完成 R1 beat 判定。
 
 ## 阻塞 / 未决问题
 
@@ -129,3 +133,4 @@
 - R3 结果：robust `mean_reversion` 换手/费用约降 90.0%，OOS 聚合从约 +1.24% 降到约 +0.33%；更安静但收益更弱，不是可批准策略。
 - R4 结果：`volatility_target_trend` OOS 聚合约 -0.77%，verifier rejected（Sharpe decay、交易数、扣费后亏损、正 OOS 段不足）。
 - R4 结果：`regime_switch_existing` OOS 聚合约 +0.08%，因 BTC 基准很差而通过 R1 beat 谓词，但 verifier rejected（Sharpe decay、交易数、正 OOS 段不足），不得批准。
+- R5 结果：候选组合按 25% 方向性敞口 cap 后 OOS 聚合约 -0.12%，年化约 -0.11%，max drawdown 约 0.32%，Sharpe 约 -0.39；未跑赢 R1 口径，且无 verifier-approved 组件，因此不可部署。
