@@ -25,6 +25,10 @@ from crypto_quant_loop.research.robustness import (
     generate_robust_signals,
     robust_settings_for,
 )
+from crypto_quant_loop.research.strategy_families import (
+    generate_regime_switch_signals,
+    generate_volatility_target_trend_signals,
+)
 
 __all__ = [
     "BeatDecision",
@@ -43,6 +47,8 @@ __all__ = [
     "compute_equal_weight_basket",
     "diagnose_walk_forward_report",
     "generate_robust_signals",
+    "generate_regime_switch_signals",
+    "generate_volatility_target_trend_signals",
     "load_ohlcv_from_duckdb",
     "robust_settings_for",
     "snapshot_from_backtest",
