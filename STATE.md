@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S8 完成，准备进入 S9
+- 阶段：S9 完成，准备进入 S10
 - 进行中 step：无
-- **下一步：S9 — Verifier 与策略注册表**
+- **下一步：S10 — 风控引擎**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -47,6 +47,10 @@
   - 完成时间：2026-06-27T12:49:48Z
   - 产物：滚动 IS/OOS window、purge+embargo、OOS regime 分类、Sharpe 衰减、deflated Sharpe 试验惩罚、walk-forward 报告。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；用 S2 的 BTC 18 个月 1h 历史生成 14 段 OOS smoke report，regime 覆盖 bull/bear/chop。
+- S9 — Verifier 与策略注册表
+  - 完成时间：2026-06-27T12:53:12Z
+  - 产物：`config/strategy-registry.yaml`、registry 加载、approved 准入过滤、Strategy Verifier、拒绝原因 JSONL 日志。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；candidate 策略不能绕过 registry，自我审批会被拒并记录原因。
 
 ## 阻塞 / 未决问题
 
@@ -70,3 +74,4 @@
 - S6 策略只生成候选信号，不具备审批、仓位或执行权限；策略注册和 verifier 留到 S9。
 - S7 当前是保守的一进一出最小闭环：信号下一根开盘入场，stop/time-stop 或默认下一根收盘出场；更完整的持仓生命周期可在后续扩展。
 - S8 smoke report 显示基础策略 OOS 表现很差（14 段中 3 段为正），这不会阻塞框架建设，但会在 S9 verifier 中导致策略保持 candidate/rejected 而非 approved。
+- S9 默认两个基础策略均保持 `candidate`，`max_notional_quote=0`，不会进入后续 Signal Loop。
