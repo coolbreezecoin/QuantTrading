@@ -10,6 +10,7 @@ from crypto_quant_loop.config.models import (
     AllConfigs,
     ExchangesConfig,
     FillsConfig,
+    ResearchConfig,
     RiskPolicyConfig,
     StrategiesConfig,
     SymbolsConfig,
@@ -41,6 +42,7 @@ def load_config_file[
         ExchangesConfig,
         SymbolsConfig,
         StrategiesConfig,
+        ResearchConfig,
     )
 ](path: Path, model_type: type[ConfigModel]) -> ConfigModel:
     raw = load_yaml_file(path)
@@ -58,6 +60,7 @@ def load_all_configs(config_dir: Path = Path("config")) -> AllConfigs:
             exchanges=load_config_file(config_dir / "exchanges.yaml", ExchangesConfig),
             symbols=load_config_file(config_dir / "symbols.yaml", SymbolsConfig),
             strategies=load_config_file(config_dir / "strategies.yaml", StrategiesConfig),
+            research=load_config_file(config_dir / "research.yaml", ResearchConfig),
         )
     except ValidationError as exc:
         raise ConfigLoadError(f"Config files are inconsistent: {exc}") from exc
