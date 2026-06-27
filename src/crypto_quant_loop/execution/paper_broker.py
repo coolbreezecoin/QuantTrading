@@ -88,6 +88,13 @@ class PaperBroker:
             if is_open and missing_from_ledger:
                 order.status = "canceled"
 
+    def record_fill(self, order: Order, fill: Fill) -> None:
+        self._apply_fill(order, fill)
+        if order.remaining_quantity == 0 and order.status != "rejected":
+            order.status = "filled"
+        else:
+            order.status = "partially_filled"
+
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
@@ -124,12 +131,8 @@ class PaperBroker:
                 price=level.price,
                 timestamp_ms=snapshot.timestamp_ms,
             )
-            self._apply_fill(order, fill)
+            self.record_fill(order, fill)
             fills.append(fill)
-        if order.remaining_quantity == 0 and order.status != "rejected":
-            order.status = "filled"
-        elif fills:
-            order.status = "partially_filled"
         return fills
 
     def _apply_fill(self, order: Order, fill: Fill) -> None:
