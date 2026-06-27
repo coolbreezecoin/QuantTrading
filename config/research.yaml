@@ -1,0 +1,24 @@
+# research.yaml — R-stage benchmark and outperformance criteria
+#
+# This file defines research acceptance criteria only. It does not approve
+# strategies, allocate capital, or enable live trading.
+
+benchmarks:
+  timeframe: 1h
+  primary_symbol: BTCUSDT
+  basket_symbols: [BTCUSDT, ETHUSDT, SOLUSDT]
+  basket_weights:
+    BTCUSDT: 0.3333333333
+    ETHUSDT: 0.3333333333
+    SOLUSDT: 0.3333333334
+  history_min_days: 540
+  fee_order_type: market
+
+beat_criteria:
+  metric_scope: oos
+  fee_adjusted: true
+  risk_adjusted: true
+  calmar_min_delta: 0.0
+  sharpe_min_delta: 0.0
+  max_drawdown_ratio: 1.0
+  require_positive_oos_return: true

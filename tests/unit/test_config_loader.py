@@ -20,6 +20,7 @@ def test_load_all_configs_from_repo_config() -> None:
     assert configs.exchanges.defaults.dry_run is True
     assert configs.fills.backtest_historical.entry_price == "next_bar_open"
     assert "momentum_breakout" in configs.strategies.strategies
+    assert configs.research.beat_criteria.metric_scope == "oos"
 
 
 def test_invalid_numeric_range_is_rejected(tmp_path: Path) -> None:
@@ -53,4 +54,3 @@ def test_cross_file_symbol_mismatch_is_rejected(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigLoadError, match="DOGEUSDT"):
         load_all_configs(tmp_path)
-

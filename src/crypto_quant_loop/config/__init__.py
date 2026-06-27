@@ -3,6 +3,7 @@ from crypto_quant_loop.config.models import (
     AllConfigs,
     ExchangesConfig,
     FillsConfig,
+    ResearchConfig,
     RiskPolicyConfig,
     StrategiesConfig,
     SymbolsConfig,
@@ -13,9 +14,9 @@ __all__ = [
     "ConfigLoadError",
     "ExchangesConfig",
     "FillsConfig",
+    "ResearchConfig",
     "RiskPolicyConfig",
     "StrategiesConfig",
     "SymbolsConfig",
     "load_all_configs",
 ]
-

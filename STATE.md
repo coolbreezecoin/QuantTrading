@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S14 脚手架完成，停在真金白银交易独立门禁
+- 阶段：R1 完成，准备进入 R2
 - 进行中 step：无
-- **下一步：等待人工再次显式批准真实交易；当前仅允许 dry-run 脚手架**
+- **下一步：R2 — 诊断现有策略为何 OOS 差**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -72,6 +72,10 @@
   - 人工批准范围：仅允许写 live 交易所适配器脚手架、env-only 密钥读取、server-side stop/OCO 代码路径、exchange-canonical reconciliation 与 live dry-run 测试；不启用真实交易。
   - 产物：ccxt-shaped `LiveExchangeAdapter`、dry-run hard gate、clientOrderId 幂等复用、保护性止损请求构建/提交路径、环境变量密钥 no-op 降级、exchange-canonical reconciliation、live dry-run fixture。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；live dry-run 链路断言无真实订单可达，`config/exchanges.yaml` 的 `dry_run` 仍为 true，reconciliation 以交易所返回的挂单/持仓为准。
+- R1 — 基准与"跑赢"的判定
+  - 完成时间：2026-06-27T14:08:52Z
+  - 产物：`config/research.yaml` 研究口径、ResearchConfig schema、buy-and-hold BTC 与 BTC/ETH/SOL 等权基准、OOS 扣费后风险调整 beat 谓词、R1 baseline report。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；本地 `data/processed/market.duckdb` 三标的各 12,960 根 1h bar，覆盖 540 天，已生成 `reports/r1_baselines.json`。
 
 ## 阻塞 / 未决问题
 
@@ -82,6 +86,7 @@
 
 - S14 脚手架已按人工批准范围完成，但本次批准仅限 dry-run 代码路径；没有启用真实交易、没有发送真实订单、没有读取或提交真实密钥、没有打开外部告警。
 - 开启真金白银交易是 S14 之外的独立门禁，至少需同时满足：(a) 有策略通过 verifier 被 `approved`，(b) Fill-Fidelity 偏差验证通过，(c) 人工再次显式批准。
+- R 阶段允许继续做 research/report-only 工作；不得把任何候选策略自我批准为 `approved`，也不得设置正数 `max_notional_quote`。
 
 ## 最近决策
 
@@ -104,3 +109,5 @@
 - Fill-fidelity 校准只能产出偏差报告与人工复核建议，不能自动修改 `config/fills.yaml`。
 - S14 的 live adapter 默认 dry-run；即便构造 `dry_run=false`，未提供新的 `allow_real_trading` 独立门禁也会拒绝真实 order path。
 - S14 未修改 `config/exchanges.yaml`、`config/strategy-registry.yaml` 或任何风控阈值；两个基础策略仍为 candidate 且 `max_notional_quote=0`。
+- R1 将"跑赢"固定为 OOS、扣费后、风险调整口径：Calmar 优于基准，或 Sharpe 不低于基准且最大回撤不高于基准；负收益候选即使风险指标较好也不算通过。
+- R1 真实历史基准结果偏弱：BTC buy-and-hold 540 天扣费后约 -37.59%，等权 BTC/ETH/SOL 约 -52.83%；这只是研究基准，不代表策略通过。

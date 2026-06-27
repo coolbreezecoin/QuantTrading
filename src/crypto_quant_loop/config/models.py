@@ -213,12 +213,48 @@ class StrategiesConfig(StrictModel):
     verification_thresholds: VerificationThresholdsConfig
 
 
+class ResearchBenchmarksConfig(StrictModel):
+    timeframe: Literal["1h", "15m", "5m"]
+    primary_symbol: str = Field(min_length=1)
+    basket_symbols: list[str] = Field(min_length=2)
+    basket_weights: dict[str, PositiveFloat]
+    history_min_days: PositiveInt
+    fee_order_type: Literal["market", "limit"]
+
+    @model_validator(mode="after")
+    def validate_weights(self) -> ResearchBenchmarksConfig:
+        symbol_set = set(self.basket_symbols)
+        weight_set = set(self.basket_weights)
+        if symbol_set != weight_set:
+            raise ValueError("basket_weights must match basket_symbols exactly")
+        total_weight = sum(self.basket_weights.values())
+        if abs(total_weight - 1.0) > 1e-6:
+            raise ValueError("basket_weights must sum to 1.0")
+        return self
+
+
+class BeatCriteriaConfig(StrictModel):
+    metric_scope: Literal["oos"]
+    fee_adjusted: bool
+    risk_adjusted: bool
+    calmar_min_delta: float = Field(ge=0)
+    sharpe_min_delta: float = Field(ge=0)
+    max_drawdown_ratio: PositiveFloat = Field(le=1)
+    require_positive_oos_return: bool
+
+
+class ResearchConfig(StrictModel):
+    benchmarks: ResearchBenchmarksConfig
+    beat_criteria: BeatCriteriaConfig
+
+
 class AllConfigs(StrictModel):
     risk_policy: RiskPolicyConfig
     fills: FillsConfig
     exchanges: ExchangesConfig
     symbols: SymbolsConfig
     strategies: StrategiesConfig
+    research: ResearchConfig
 
     @model_validator(mode="after")
     def validate_cross_file_consistency(self) -> AllConfigs:
@@ -258,6 +294,25 @@ class AllConfigs(StrictModel):
                 raise ValueError(
                     f"strategy type {strategy_type} order type {order_type} does not match "
                     f"fills.yaml mapping {expected_order_type}"
+                )
+
+        research_symbols = {
+            self.research.benchmarks.primary_symbol,
+            *self.research.benchmarks.basket_symbols,
+        }
+        missing_research = research_symbols - configured_symbols
+        if missing_research:
+            missing_list = ", ".join(sorted(missing_research))
+            raise ValueError(
+                "research.yaml references symbols missing from symbols.yaml: "
+                f"{missing_list}"
+            )
+
+        for symbol in research_symbols:
+            roles = set(self.symbols.symbols[symbol].roles)
+            if "research" not in roles:
+                raise ValueError(
+                    f"{symbol} is in research benchmarks but lacks research role in symbols.yaml"
                 )
 
         return self
