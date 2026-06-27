@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S12 完成，准备进入 S13
+- 阶段：S13 完成，停在 S14 人工门禁
 - 进行中 step：无
-- **下一步：S13 — 监控、告警、账本、Fill-Fidelity**
+- **下一步：S14 — L2 实盘接入（人工门禁，写代码不启用）**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -63,6 +63,10 @@
   - 完成时间：2026-06-27T13:04:04Z
   - 产物：`LoopRuntime`、默认 loop specs、APScheduler adapter、heartbeat、`loop-run-log.jsonl` 写入、dead-man switch。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；优先级执行、心跳/run-log 写入、dead-man stale 检测均有测试。
+- S13 — 监控、告警、账本、Fill-Fidelity
+  - 完成时间：2026-06-27T13:08:11Z
+  - 产物：默认关闭的 alert sink、dashboard snapshot、trade ledger Parquet、fill-fidelity Parquet/report、`docs/fill-fidelity-calibration.md` 校准说明。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；alert 默认 disabled，不会发送外部通知。
 
 ## 阻塞 / 未决问题
 
@@ -71,7 +75,7 @@
 
 ## 等待人工
 
-- 尚未到门禁。S14（L2 实盘接入）及任何真实资金/密钥动作需人工批准（见 `CODEX-BUILD-LOOP.md` §5）。
+- 已到 S14 人工门禁。根据 `CODEX-BUILD-LOOP.md` §5 与用户指令，停止在 S14；任何真实密钥、真实资金、实盘订单、外部告警渠道或配置阈值调整都需人工批准。
 
 ## 最近决策
 
@@ -90,3 +94,5 @@
 - S10 kill switch 只输出动作计划，真实 broker 执行留给 S11/S12。
 - S11 仍为 paper only；live 适配器与真实交易所 reconciliation 留到 S14 门禁脚手架。
 - S12 没有启动常驻 scheduler；APScheduler adapter 需后续显式调用。
+- S13 alert sink 默认 disabled；当前仅落本地结构化监控数据，不配置外部告警渠道。
+- Fill-fidelity 校准只能产出偏差报告与人工复核建议，不能自动修改 `config/fills.yaml`。
