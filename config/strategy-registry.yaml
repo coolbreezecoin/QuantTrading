@@ -21,3 +21,34 @@ strategies:
     max_notional_quote: 0
     reason: "Pending verifier approval; not allowed into Signal Loop."
 
+  robust_momentum_breakout:
+    status: rejected
+    maker_id: codex-research
+    verifier_id: strategy-verifier
+    approved_at: null
+    max_notional_quote: 0
+    reason: "R6 rejected: oos_sharpe_decay_too_high, insufficient_oos_trades, not_profitable_after_fees, not_majority_positive_oos_segments; robustness battery failed."
+
+  robust_mean_reversion:
+    status: rejected
+    maker_id: codex-research
+    verifier_id: strategy-verifier
+    approved_at: null
+    max_notional_quote: 0
+    reason: "R6 rejected: oos_sharpe_decay_too_high, insufficient_oos_trades, not_majority_positive_oos_segments; robustness battery failed."
+
+  volatility_target_trend:
+    status: rejected
+    maker_id: codex-research
+    verifier_id: strategy-verifier
+    approved_at: null
+    max_notional_quote: 0
+    reason: "R6 rejected: oos_sharpe_decay_too_high, insufficient_oos_trades, not_profitable_after_fees, not_majority_positive_oos_segments; robustness battery failed."
+
+  regime_switch_existing:
+    status: rejected
+    maker_id: codex-research
+    verifier_id: strategy-verifier
+    approved_at: null
+    max_notional_quote: 0
+    reason: "R6 rejected: oos_sharpe_decay_too_high, insufficient_oos_trades, not_majority_positive_oos_segments; robustness battery failed."
