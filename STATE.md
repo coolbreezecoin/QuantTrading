@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：R1 完成，准备进入 R2
+- 阶段：R2 完成，准备进入 R3
 - 进行中 step：无
-- **下一步：R2 — 诊断现有策略为何 OOS 差**
+- **下一步：R3 — 稳健化现有策略**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -76,6 +76,10 @@
   - 完成时间：2026-06-27T14:08:52Z
   - 产物：`config/research.yaml` 研究口径、ResearchConfig schema、buy-and-hold BTC 与 BTC/ETH/SOL 等权基准、OOS 扣费后风险调整 beat 谓词、R1 baseline report。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；本地 `data/processed/market.duckdb` 三标的各 12,960 根 1h bar，覆盖 540 天，已生成 `reports/r1_baselines.json`。
+- R2 — 诊断现有策略为何 OOS 差
+  - 完成时间：2026-06-27T14:14:54Z
+  - 产物：walk-forward 诊断模块、regime/费用/换手/胜率/盈亏比/信号滞后归因、`reports/r2_diagnostics_momentum_breakout.json`、`reports/r2_diagnostics_mean_reversion.json`。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；两个现有策略均生成 OOS 诊断报告。
 
 ## 阻塞 / 未决问题
 
@@ -111,3 +115,5 @@
 - S14 未修改 `config/exchanges.yaml`、`config/strategy-registry.yaml` 或任何风控阈值；两个基础策略仍为 candidate 且 `max_notional_quote=0`。
 - R1 将"跑赢"固定为 OOS、扣费后、风险调整口径：Calmar 优于基准，或 Sharpe 不低于基准且最大回撤不高于基准；负收益候选即使风险指标较好也不算通过。
 - R1 真实历史基准结果偏弱：BTC buy-and-hold 540 天扣费后约 -37.59%，等权 BTC/ETH/SOL 约 -52.83%；这只是研究基准，不代表策略通过。
+- R2 诊断：`momentum_breakout` OOS 聚合约 -8.00%，三种 regime 均亏，胜率约 29.1%，盈亏比约 0.93，费用约 50.93 USDT；主导失效是负 OOS、广泛 regime 失败、低胜率和 poor payoff。
+- R2 诊断：`mean_reversion` OOS 聚合约 +1.24%，但震荡段约 -1.16%、胜率约 43.3%；主导弱点是 chop regime 与低胜率，不构成自动批准。
