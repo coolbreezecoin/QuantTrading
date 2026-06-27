@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S1 完成，准备进入 S2
+- 阶段：S2 完成，准备进入 S3
 - 进行中 step：无
-- **下一步：S2 — 数据层：历史 OHLCV**
+- **下一步：S3 — 数据层：Data Health Loop**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -19,10 +19,14 @@
   - 完成时间：2026-06-27T12:22:09Z
   - 产物：Pydantic 配置 schema、YAML 加载器、跨文件一致性校验、配置加载测试。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；现有 `config/*.yaml` 加载成功，非法配置会被拒绝并返回可读错误。
+- S2 — 数据层：历史 OHLCV
+  - 完成时间：2026-06-27T12:28:22Z
+  - 产物：OHLCV client、分页拉取、Parquet/DuckDB 写入、质量报告、`cql-fetch-ohlcv` CLI。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；OKX 公共 REST 已落库 BTC/ETH/SOL 各 12,960 根 1h K 线，质量报告覆盖率 100%、缺口 0、重复 0。
 
 ## 阻塞 / 未决问题
 
-（无）
+- Binance 公共 REST 在当前网络位置返回 451 地域限制；S2 使用 OKX 公共 REST 完成历史数据落库。未启用 OKX 交易权限，也未读取任何密钥。
 
 ## 等待人工
 
@@ -34,3 +38,4 @@
 - 风控/成交参数以 `config/risk-policy.yaml`、`config/fills.yaml` 为准。
 - S0 本地验证使用 `uv` 创建的 CPython 3.13 虚拟环境；项目仍声明 `requires-python >=3.12`。
 - S1 配置加载只保留密钥环境变量名，不读取真实密钥值。
+- S2 历史数据产物位于 `data/` 与 `reports/`，按 `.gitignore` 不入库；代码与审计状态入库。
