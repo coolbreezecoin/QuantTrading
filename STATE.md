@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S6 完成，准备进入 S7
+- 阶段：S7 完成，准备进入 S8
 - 进行中 step：无
-- **下一步：S7 — 回测引擎**
+- **下一步：S8 — Walk-forward 验证框架**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -39,6 +39,10 @@
   - 完成时间：2026-06-27T12:42:26Z
   - 产物：`Signal`/`StrategyState`、配置驱动信号生成、动量突破策略、均值回归策略。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；同数据同参数复现同信号，均值回归信号包含硬止损和 `time_stop_bars`。
+- S7 — 回测引擎
+  - 完成时间：2026-06-27T12:46:27Z
+  - 产物：保守历史成交模型、按止损反推仓位、min-notional 跳过、maker/taker 费用、lookahead guard、基础回测报告指标。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；lookahead 注入测试会被拦截，min-notional 地板生效，maker/taker 费用绑定生效。
 
 ## 阻塞 / 未决问题
 
@@ -60,3 +64,4 @@
 - S4 明确 L2 盘口历史不可回填；默认不启动持续 websocket，后续由调度/配置显式开启。
 - S5 特征 warmup 使用 `None`，策略层必须显式处理不可用特征。
 - S6 策略只生成候选信号，不具备审批、仓位或执行权限；策略注册和 verifier 留到 S9。
+- S7 当前是保守的一进一出最小闭环：信号下一根开盘入场，stop/time-stop 或默认下一根收盘出场；更完整的持仓生命周期可在后续扩展。
