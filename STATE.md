@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S11 完成，准备进入 S12
+- 阶段：S12 完成，准备进入 S13
 - 进行中 step：无
-- **下一步：S12 — Loops 运行时**
+- **下一步：S13 — 监控、告警、账本、Fill-Fidelity**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -59,6 +59,10 @@
   - 完成时间：2026-06-27T13:00:11Z
   - 产物：paper broker、订单状态机、clientOrderId 幂等、前向盘口撮合、部分成交、撤单、持仓/PnL、JSON 状态恢复、reconciliation。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；signal→order→fill→position→PnL 跑通，重试不产生双倍仓位，崩溃恢复后无悬挂订单。
+- S12 — Loops 运行时
+  - 完成时间：2026-06-27T13:04:04Z
+  - 产物：`LoopRuntime`、默认 loop specs、APScheduler adapter、heartbeat、`loop-run-log.jsonl` 写入、dead-man switch。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；优先级执行、心跳/run-log 写入、dead-man stale 检测均有测试。
 
 ## 阻塞 / 未决问题
 
@@ -85,3 +89,4 @@
 - S9 默认两个基础策略均保持 `candidate`，`max_notional_quote=0`，不会进入后续 Signal Loop。
 - S10 kill switch 只输出动作计划，真实 broker 执行留给 S11/S12。
 - S11 仍为 paper only；live 适配器与真实交易所 reconciliation 留到 S14 门禁脚手架。
+- S12 没有启动常驻 scheduler；APScheduler adapter 需后续显式调用。
