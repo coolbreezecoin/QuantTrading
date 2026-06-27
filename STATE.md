@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S9 完成，准备进入 S10
+- 阶段：S10 完成，准备进入 S11
 - 进行中 step：无
-- **下一步：S10 — 风控引擎**
+- **下一步：S11 — Paper Broker 与订单状态机**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -51,6 +51,10 @@
   - 完成时间：2026-06-27T12:53:12Z
   - 产物：`config/strategy-registry.yaml`、registry 加载、approved 准入过滤、Strategy Verifier、拒绝原因 JSONL 日志。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；candidate 策略不能绕过 registry，自我审批会被拒并记录原因。
+- S10 — 风控引擎
+  - 完成时间：2026-06-27T12:56:31Z
+  - 产物：仓位 sizing、单标的/组合敞口限制、连亏 cooldown、滚动 24h 熔断、总回撤、业务硬止损、运行态熔断、kill switch 动作计划。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；阶梯顺序测试确认 cooldown 先于滚动 24h 熔断，kill switch 演练覆盖撤单/halt/可选平仓。
 
 ## 阻塞 / 未决问题
 
@@ -75,3 +79,4 @@
 - S7 当前是保守的一进一出最小闭环：信号下一根开盘入场，stop/time-stop 或默认下一根收盘出场；更完整的持仓生命周期可在后续扩展。
 - S8 smoke report 显示基础策略 OOS 表现很差（14 段中 3 段为正），这不会阻塞框架建设，但会在 S9 verifier 中导致策略保持 candidate/rejected 而非 approved。
 - S9 默认两个基础策略均保持 `candidate`，`max_notional_quote=0`，不会进入后续 Signal Loop。
+- S10 kill switch 只输出动作计划，真实 broker 执行留给 S11/S12。
