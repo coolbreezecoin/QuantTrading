@@ -28,6 +28,7 @@ dev = [
 
 [project.scripts]
 cql-empty-loop = "crypto_quant_loop.cli:main"
+cql-data-health = "crypto_quant_loop.data.health_cli:main"
 cql-fetch-ohlcv = "crypto_quant_loop.data.cli:main"
 
 [tool.hatch.build.targets.wheel]
