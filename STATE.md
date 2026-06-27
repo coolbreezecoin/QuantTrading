@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S13 完成，停在 S14 人工门禁
+- 阶段：S14 脚手架完成，停在真金白银交易独立门禁
 - 进行中 step：无
-- **下一步：S14 — L2 实盘接入（人工门禁，写代码不启用）**
+- **下一步：等待人工再次显式批准真实交易；当前仅允许 dry-run 脚手架**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -67,6 +67,11 @@
   - 完成时间：2026-06-27T13:08:11Z
   - 产物：默认关闭的 alert sink、dashboard snapshot、trade ledger Parquet、fill-fidelity Parquet/report、`docs/fill-fidelity-calibration.md` 校准说明。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；alert 默认 disabled，不会发送外部通知。
+- S14 — L2 实盘接入脚手架（仅 dry-run）
+  - 完成时间：2026-06-27T13:34:57Z
+  - 人工批准范围：仅允许写 live 交易所适配器脚手架、env-only 密钥读取、server-side stop/OCO 代码路径、exchange-canonical reconciliation 与 live dry-run 测试；不启用真实交易。
+  - 产物：ccxt-shaped `LiveExchangeAdapter`、dry-run hard gate、clientOrderId 幂等复用、保护性止损请求构建/提交路径、环境变量密钥 no-op 降级、exchange-canonical reconciliation、live dry-run fixture。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；live dry-run 链路断言无真实订单可达，`config/exchanges.yaml` 的 `dry_run` 仍为 true，reconciliation 以交易所返回的挂单/持仓为准。
 
 ## 阻塞 / 未决问题
 
@@ -75,7 +80,8 @@
 
 ## 等待人工
 
-- 已到 S14 人工门禁。根据 `CODEX-BUILD-LOOP.md` §5 与用户指令，停止在 S14；任何真实密钥、真实资金、实盘订单、外部告警渠道或配置阈值调整都需人工批准。
+- S14 脚手架已按人工批准范围完成，但本次批准仅限 dry-run 代码路径；没有启用真实交易、没有发送真实订单、没有读取或提交真实密钥、没有打开外部告警。
+- 开启真金白银交易是 S14 之外的独立门禁，至少需同时满足：(a) 有策略通过 verifier 被 `approved`，(b) Fill-Fidelity 偏差验证通过，(c) 人工再次显式批准。
 
 ## 最近决策
 
@@ -96,3 +102,5 @@
 - S12 没有启动常驻 scheduler；APScheduler adapter 需后续显式调用。
 - S13 alert sink 默认 disabled；当前仅落本地结构化监控数据，不配置外部告警渠道。
 - Fill-fidelity 校准只能产出偏差报告与人工复核建议，不能自动修改 `config/fills.yaml`。
+- S14 的 live adapter 默认 dry-run；即便构造 `dry_run=false`，未提供新的 `allow_real_trading` 独立门禁也会拒绝真实 order path。
+- S14 未修改 `config/exchanges.yaml`、`config/strategy-registry.yaml` 或任何风控阈值；两个基础策略仍为 candidate 且 `max_notional_quote=0`。
