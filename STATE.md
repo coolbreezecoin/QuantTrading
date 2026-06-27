@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：R2 完成，准备进入 R3
+- 阶段：R3 完成，准备进入 R4
 - 进行中 step：无
-- **下一步：R3 — 稳健化现有策略**
+- **下一步：R4 — 克制地新增稳健策略族（至多 1-2 个）**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -80,6 +80,10 @@
   - 完成时间：2026-06-27T14:14:54Z
   - 产物：walk-forward 诊断模块、regime/费用/换手/胜率/盈亏比/信号滞后归因、`reports/r2_diagnostics_momentum_breakout.json`、`reports/r2_diagnostics_mean_reversion.json`。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；两个现有策略均生成 OOS 诊断报告。
+- R3 — 稳健化现有策略
+  - 完成时间：2026-06-27T14:22:52Z
+  - 产物：research-only robust signal wrapper、regime 过滤、最小信号间隔、延长 time stop、base vs robust walk-forward comparison、`reports/r3_robustness_*.json`。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；两个 robust 版本均降低换手与费用，worst Sharpe decay 不恶化或改善。
 
 ## 阻塞 / 未决问题
 
@@ -117,3 +121,5 @@
 - R1 真实历史基准结果偏弱：BTC buy-and-hold 540 天扣费后约 -37.59%，等权 BTC/ETH/SOL 约 -52.83%；这只是研究基准，不代表策略通过。
 - R2 诊断：`momentum_breakout` OOS 聚合约 -8.00%，三种 regime 均亏，胜率约 29.1%，盈亏比约 0.93，费用约 50.93 USDT；主导失效是负 OOS、广泛 regime 失败、低胜率和 poor payoff。
 - R2 诊断：`mean_reversion` OOS 聚合约 +1.24%，但震荡段约 -1.16%、胜率约 43.3%；主导弱点是 chop regime 与低胜率，不构成自动批准。
+- R3 结果：robust `momentum_breakout` 换手/费用约降 92.5%，OOS 聚合从约 -8.00% 改为约 -0.25%，但仍为负且费用仍吞噬 edge，不是可批准策略。
+- R3 结果：robust `mean_reversion` 换手/费用约降 90.0%，OOS 聚合从约 +1.24% 降到约 +0.33%；更安静但收益更弱，不是可批准策略。
