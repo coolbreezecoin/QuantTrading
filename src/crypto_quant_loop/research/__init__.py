@@ -31,6 +31,10 @@ from crypto_quant_loop.research.robustness import (
     generate_robust_signals,
     robust_settings_for,
 )
+from crypto_quant_loop.research.robustness_battery import (
+    RobustnessBatteryReport,
+    run_robustness_battery,
+)
 from crypto_quant_loop.research.strategy_families import (
     generate_regime_switch_signals,
     generate_volatility_target_trend_signals,
@@ -42,6 +46,7 @@ __all__ = [
     "PerformanceSnapshot",
     "PortfolioReport",
     "RegimeDiagnostics",
+    "RobustnessBatteryReport",
     "StrategyDiagnostics",
     "RobustSignalSettings",
     "RobustnessComparison",
@@ -61,5 +66,6 @@ __all__ = [
     "inverse_volatility_weights",
     "load_ohlcv_from_duckdb",
     "robust_settings_for",
+    "run_robustness_battery",
     "snapshot_from_backtest",
 ]
