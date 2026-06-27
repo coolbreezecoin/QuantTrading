@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：R3 完成，准备进入 R4
+- 阶段：R4 完成，准备进入 R5
 - 进行中 step：无
-- **下一步：R4 — 克制地新增稳健策略族（至多 1-2 个）**
+- **下一步：R5 — 组合层与波动率目标**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -84,6 +84,10 @@
   - 完成时间：2026-06-27T14:22:52Z
   - 产物：research-only robust signal wrapper、regime 过滤、最小信号间隔、延长 time stop、base vs robust walk-forward comparison、`reports/r3_robustness_*.json`。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；两个 robust 版本均降低换手与费用，worst Sharpe decay 不恶化或改善。
+- R4 — 克制地新增稳健策略族
+  - 完成时间：2026-06-27T14:28:20Z
+  - 产物：research-only `volatility_target_trend`、`regime_switch_existing`、同口径 walk-forward/verifier 报告、`reports/r4_*.json`。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；两个新增家族均完成参数试验次数记录与 verifier 标记。
 
 ## 阻塞 / 未决问题
 
@@ -123,3 +127,5 @@
 - R2 诊断：`mean_reversion` OOS 聚合约 +1.24%，但震荡段约 -1.16%、胜率约 43.3%；主导弱点是 chop regime 与低胜率，不构成自动批准。
 - R3 结果：robust `momentum_breakout` 换手/费用约降 92.5%，OOS 聚合从约 -8.00% 改为约 -0.25%，但仍为负且费用仍吞噬 edge，不是可批准策略。
 - R3 结果：robust `mean_reversion` 换手/费用约降 90.0%，OOS 聚合从约 +1.24% 降到约 +0.33%；更安静但收益更弱，不是可批准策略。
+- R4 结果：`volatility_target_trend` OOS 聚合约 -0.77%，verifier rejected（Sharpe decay、交易数、扣费后亏损、正 OOS 段不足）。
+- R4 结果：`regime_switch_existing` OOS 聚合约 +0.08%，因 BTC 基准很差而通过 R1 beat 谓词，但 verifier rejected（Sharpe decay、交易数、正 OOS 段不足），不得批准。
