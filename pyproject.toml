@@ -9,7 +9,11 @@ description = "A loop-engineered crypto quant trading system, starting with repo
 readme = "crypto-quant-loop-development-plan.md"
 requires-python = ">=3.12"
 dependencies = [
+  "ccxt>=4.5",
+  "duckdb>=1.4",
   "pydantic>=2.12",
+  "pyarrow>=22.0",
+  "pytz>=2026.1",
   "PyYAML>=6.0.3",
 ]
 
@@ -24,6 +28,7 @@ dev = [
 
 [project.scripts]
 cql-empty-loop = "crypto_quant_loop.cli:main"
+cql-fetch-ohlcv = "crypto_quant_loop.data.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/crypto_quant_loop"]
@@ -45,3 +50,7 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 python_version = "3.12"
 strict = true
 files = ["src", "tests", "scripts"]
+
+[[tool.mypy.overrides]]
+module = ["ccxt.*", "duckdb", "pyarrow.*"]
+ignore_missing_imports = true
