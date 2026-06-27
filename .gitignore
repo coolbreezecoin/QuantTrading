@@ -1,0 +1,36 @@
+# 密钥与环境（红线：绝不入库）
+.env
+.env.*
+*.key
+*.pem
+secrets/
+credentials*.json
+
+# 数据与产物（不入库，体积大且可重建）
+data/
+reports/
+*.parquet
+*.duckdb
+*.db
+loop-run-log.jsonl
+build-log.jsonl
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# 编辑器 / OS
+.vscode/
+.idea/
+.DS_Store

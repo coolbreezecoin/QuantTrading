@@ -1,0 +1,61 @@
+# risk-policy.yaml — 风控红线，策略不得覆盖
+#
+# 标注 "占位" 的值需用前向 paper 的 Fill-Fidelity 数据校准后再上线。
+# 配套文档：crypto-quant-loop-development-plan.md 第 2.5 / 11 节。
+
+# 账户与运行模式
+account:
+  equity_quote: USDT
+  equity_size: 1000          # 当前本金
+  mode: plumbing_test        # A 案：管道测试，不以盈亏评判（见计划 0. 默认假设）
+  # 本金增长后改 mode: live_sized，并重做最小本金测算、考虑切 B 案
+
+# 标的：实盘与研究分离
+symbols:
+  live: [BTCUSDT]                       # A 案：实盘先只跑 BTC 单标的
+  research: [BTCUSDT, ETHUSDT, SOLUSDT] # 回测/paper 可全覆盖
+
+# 杠杆
+leverage:
+  spot_max: 0                # 现货无杠杆
+  perp_max: 1                # 永续阶段上限，初期 1x；最高 2x 需人工审批
+
+# 仓位规模：由止损反推（"0.75% 风险"必须有止损才有定义）
+position_sizing:
+  single_trade_risk_pct: 0.0075   # 净值 0.75%
+  stop:
+    method: atr
+    atr_period: 14
+    atr_mult: 2.0                 # 止损距离 = 2×ATR
+  # 名义 = equity * risk_pct / (止损距离占价比)
+  single_symbol_notional_cap_pct: 0.15   # 单标的名义上限 15%（1000U 下此条主导，风险阶梯休眠）
+  portfolio_directional_cap_pct: 0.25    # 组合 beta 调整后净敞口上限 25%
+  min_notional_floor_quote: 25           # 风险法名义 < 25 USDT 的信号直接跳过，避免费用主导的微型单
+
+# 熔断阶梯（先轻后重，互不吞没；1000U 下休眠，本金增长后生效）
+circuit_breakers:
+  consecutive_losses:
+    count: 3                 # 连亏 3 笔（满额时约 -2.25%）
+    cooldown_hours: 12       # 占位：暂停开新仓时长
+  rolling_24h_loss_halt_pct: 0.03    # 滚动 24h 亏损 >3% → 当窗口停开新仓
+  total_drawdown_pause_pct: 0.06     # 相对净值高点回撤 >6% → 暂停所有策略转人工
+  business_hard_stop_pct: 0.175      # 累计亏损 ~17.5% → 整体停机重评（占位，区间 15-20%）
+  loss_window: rolling_24h           # 24/7 无收盘，用滚动 24h；对账边界用 UTC 自然日
+
+# 自动熔断触发器（与盈亏无关的运行态）
+auto_halt_on:
+  data_gap: true             # 数据缺口
+  api_error: true            # 交易所 API 异常
+  price_deviation_bps: 200   # 占位：价格偏离参考 >2% 视为异常
+  loop_heartbeat_miss_factor: 3   # 某 loop 超过 cadence 的 3 倍无心跳 → 告警 + 保守动作
+
+# 均值回归专属：无自然止损，需时间止损
+mean_reversion:
+  time_stop_bars: 24         # 占位：持仓超过 24 根 1h 未回归则平
+
+# kill switch 动作
+kill_switch:
+  cancel_all_open_orders: true
+  flatten_positions: true    # 可配置：是否市价平掉所有持仓
+  set_global_halt: true
+  triggers: [manual, risk_sentinel]

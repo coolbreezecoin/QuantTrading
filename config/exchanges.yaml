@@ -1,0 +1,40 @@
+# exchanges.yaml — 交易所连接配置
+#
+# 红线：密钥绝不写进本文件，只从环境变量/密钥管理器读取（见 CODEX-BUILD-LOOP.md §1）。
+# 本文件只放非敏感的连接参数与安全开关。
+
+defaults:
+  quote: USDT
+  dry_run: true              # 硬开关：默认一切 dry-run，启用真实下单需人工门禁（S14）
+  rate_limit: true           # 启用 ccxt 限频
+  recv_window_ms: 5000       # 时间戳容差，配合 NTP 校准
+  timeout_ms: 10000
+
+exchanges:
+  binance:
+    enabled: true
+    type: spot               # 现货优先；永续为第二阶段
+    # 密钥从环境变量读取，本文件只声明变量名，不放值
+    api_key_env: BINANCE_API_KEY
+    api_secret_env: BINANCE_API_SECRET
+    permissions:
+      withdraw: false         # key 必须无提现权限
+      ip_allowlist: true      # 交易所侧开启 IP 白名单
+    fees:
+      use_bnb_discount: true  # 与 fills.yaml 一致
+    websocket:
+      orderbook: true         # 盘口走 ws 流，不用 REST 轮询
+      depth: 20
+
+  okx:
+    enabled: false            # 第二来源，先不启用
+    type: spot
+    api_key_env: OKX_API_KEY
+    api_secret_env: OKX_API_SECRET
+    api_passphrase_env: OKX_API_PASSPHRASE
+    permissions:
+      withdraw: false
+      ip_allowlist: true
+    websocket:
+      orderbook: true
+      depth: 20

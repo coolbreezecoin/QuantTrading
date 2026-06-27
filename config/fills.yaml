@@ -1,0 +1,32 @@
+# fills.yaml — 成交与费用模型
+#
+# 标注 "占位" 的 bps 需用前向 paper 的 Fill-Fidelity 偏差回校后再上线。
+# 配套文档：crypto-quant-loop-development-plan.md 第 2.3 / 11 节。
+
+# 历史回测：拿不到历史 L2 盘口，用保守滑点模型，宁可高估成本
+backtest_historical:
+  entry_price: next_bar_open       # 在下一根开盘价成交，不用信号收盘价
+  cross_half_spread_bps:           # 市价单穿越半个点差（占位，按标的）
+    BTCUSDT: 1.0
+    ETHUSDT: 1.5
+    SOLUSDT: 2.5
+  conservative_buffer_bps: 5       # 占位：1h 路径不可知的额外保守惩罚
+  impact_model: linear
+  impact_coeff_bps_per_1pct_adv: 10  # 占位：吃掉 1% ADV 的冲击 bps（150U 名义下几乎可忽略）
+  calibration_note: "用前向 paper 的 Fill-Fidelity 偏差回校这些 bps"
+
+# 前向 paper / dry-run：有实时盘口快照，按盘口撮合
+paper_forward:
+  use_orderbook_snapshot: true
+  market_order: walk_the_book      # 市价单按盘口深度逐档吃，算真实冲击
+  limit_order_fill: touched        # 限价单按是否被触及判断成交
+
+# 手续费（Binance spot base 档；maker/taker 与订单类型绑定）
+fees:
+  taker_bps: 10
+  maker_bps: 10
+  use_bnb_discount: true           # 约 -25% → 有效 ~7.5 bps
+  order_type_by_strategy:
+    momentum: market               # 吃 taker
+    mean_reversion: limit          # 争取 maker / 至少不吃点差
+  funding_applies: perp_only       # 资金费率只在永续阶段计入

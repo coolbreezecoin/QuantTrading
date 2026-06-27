@@ -1,0 +1,44 @@
+# strategies.yaml — 策略定义与参数
+#
+# 这里只定义策略与参数；是否允许进 Signal Loop 由 verifier + strategy-registry.yaml 决定
+# （策略生成者不能批准自己，见计划 2.2 / S9）。
+# 订单类型与 fills.yaml.fees.order_type_by_strategy 一致；止损/时间止损遵守 risk-policy.yaml。
+# 参数标注"占位"——需经 walk-forward 验证后定稿，禁止用历史最佳参数直接上线。
+
+strategies:
+  momentum_breakout:
+    type: momentum
+    enabled: true
+    order_type: market        # 吃 taker
+    params:                   # 占位，待 walk-forward 搜参
+      fast_ma: 20
+      slow_ma: 60
+      donchian_lookback: 55
+      atr_period: 14
+    stop:
+      method: atr
+      atr_mult: 2.0           # 与 risk-policy.yaml 一致
+
+  mean_reversion:
+    type: mean_reversion
+    enabled: true
+    order_type: limit         # 争取 maker / 不吃点差
+    params:                   # 占位
+      rsi_period: 14
+      rsi_oversold: 30
+      rsi_overbought: 70
+      bb_period: 20
+      bb_std: 2.0
+      trend_filter_ma: 200    # 必须过滤趋势行情，避免逆大势抄底
+    stop:
+      method: atr
+      atr_mult: 2.0
+      time_stop_bars: 24      # 无自然止损，必须配时间止损（与 risk-policy.yaml 一致）
+
+# 验证门槛由 verifier 读取（计划 2.3 / S8-S9），此处仅集中声明默认阈值
+verification_thresholds:
+  oos_sharpe_decay_max: 0.5   # IS→OOS Sharpe 衰减不超过 50%
+  max_drawdown_max: 0.10      # 占位，区间 8%-12%
+  min_trades: 100             # 占位：避免小样本幻觉
+  must_be_profitable_after_fees: true
+  no_recent_30d_failure: true

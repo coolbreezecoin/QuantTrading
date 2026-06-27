@@ -1,0 +1,42 @@
+# symbols.yaml — 交易标的与交易所 filter
+#
+# filter 值标注"占位"——启动时应从交易所 exchangeInfo 拉取真实值覆盖，
+# 下单/仓位规模必须满足这些约束（见计划 2.3、CODEX-BUILD-LOOP.md S7）。
+# live/research 的划分应与 risk-policy.yaml 的 symbols 一致。
+
+defaults:
+  quote: USDT
+  exchange: binance
+
+symbols:
+  BTCUSDT:
+    base: BTC
+    timeframe: 1h
+    roles: [live, research]   # A 案：实盘只跑 BTC
+    filters:                  # 占位，启动时用 exchangeInfo 覆盖
+      tick_size: 0.01
+      step_size: 0.00001
+      min_notional_quote: 5
+
+  ETHUSDT:
+    base: ETH
+    timeframe: 1h
+    roles: [research]         # 回测/paper 覆盖，本金增长后再纳入实盘
+    filters:                  # 占位
+      tick_size: 0.01
+      step_size: 0.0001
+      min_notional_quote: 5
+
+  SOLUSDT:
+    base: SOL
+    timeframe: 1h
+    roles: [research]
+    filters:                  # 占位
+      tick_size: 0.01
+      step_size: 0.001
+      min_notional_quote: 5
+
+# 历史回测所需的最短历史长度（计划 2.3：≥1-2 年、覆盖牛熊震荡）
+history:
+  min_lookback_days: 540      # 约 18 个月
+  require_regimes: [bull, bear, chop]
