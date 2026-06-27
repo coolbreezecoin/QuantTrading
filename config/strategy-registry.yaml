@@ -1,0 +1,23 @@
+# strategy-registry.yaml — verifier-controlled strategy admission
+#
+# Only strategies with status: approved may enter a future Signal Loop.
+# S9 intentionally leaves baseline strategies as candidate because the first
+# walk-forward smoke report was weak. Approval requires verifier evidence.
+
+strategies:
+  momentum_breakout:
+    status: candidate
+    maker_id: strategy-generator
+    verifier_id: null
+    approved_at: null
+    max_notional_quote: 0
+    reason: "Pending verifier approval; not allowed into Signal Loop."
+
+  mean_reversion:
+    status: candidate
+    maker_id: strategy-generator
+    verifier_id: null
+    approved_at: null
+    max_notional_quote: 0
+    reason: "Pending verifier approval; not allowed into Signal Loop."
+
