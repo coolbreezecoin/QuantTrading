@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S4 完成，准备进入 S5
+- 阶段：S5 完成，准备进入 S6
 - 进行中 step：无
-- **下一步：S5 — 特征库**
+- **下一步：S6 — 策略 SDK 与两个策略**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -31,6 +31,10 @@
   - 完成时间：2026-06-27T12:35:41Z
   - 产物：前向盘口 snapshot 模型、DuckDB schema、异步 collector 重连逻辑、资金费率 perp_only 落库、`docs/forward-market-data.md`。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；fake websocket 断线后可重连，盘口与资金费率 schema 可落库。
+- S5 — 特征库
+  - 完成时间：2026-06-27T12:38:52Z
+  - 产物：收益率、滚动波动率、ATR、成交量变化、bar spread bps、lookahead detector。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；同输入同输出复现测试通过，故意泄漏未来 close 的用例会被检出。
 
 ## 阻塞 / 未决问题
 
@@ -50,3 +54,4 @@
 - S2 历史数据产物位于 `data/` 与 `reports/`，按 `.gitignore` 不入库；代码与审计状态入库。
 - S3 的 `halt_required` 当前只按 `auto_halt_on.data_gap` 对缺口/低覆盖/stale 触发，异常价格先报告不自动停机。
 - S4 明确 L2 盘口历史不可回填；默认不启动持续 websocket，后续由调度/配置显式开启。
+- S5 特征 warmup 使用 `None`，策略层必须显式处理不可用特征。
