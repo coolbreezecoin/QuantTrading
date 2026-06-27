@@ -9,6 +9,7 @@ description = "A loop-engineered crypto quant trading system, starting with repo
 readme = "crypto-quant-loop-development-plan.md"
 requires-python = ">=3.12"
 dependencies = [
+  "apscheduler>=3.11",
   "ccxt>=4.5",
   "duckdb>=1.4",
   "pydantic>=2.12",
@@ -54,4 +55,8 @@ files = ["src", "tests", "scripts"]
 
 [[tool.mypy.overrides]]
 module = ["ccxt.*", "duckdb", "pyarrow.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["apscheduler.*"]
 ignore_missing_imports = true
