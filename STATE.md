@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S5 完成，准备进入 S6
+- 阶段：S6 完成，准备进入 S7
 - 进行中 step：无
-- **下一步：S6 — 策略 SDK 与两个策略**
+- **下一步：S7 — 回测引擎**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -35,6 +35,10 @@
   - 完成时间：2026-06-27T12:38:52Z
   - 产物：收益率、滚动波动率、ATR、成交量变化、bar spread bps、lookahead detector。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；同输入同输出复现测试通过，故意泄漏未来 close 的用例会被检出。
+- S6 — 策略 SDK 与两个策略
+  - 完成时间：2026-06-27T12:42:26Z
+  - 产物：`Signal`/`StrategyState`、配置驱动信号生成、动量突破策略、均值回归策略。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；同数据同参数复现同信号，均值回归信号包含硬止损和 `time_stop_bars`。
 
 ## 阻塞 / 未决问题
 
@@ -55,3 +59,4 @@
 - S3 的 `halt_required` 当前只按 `auto_halt_on.data_gap` 对缺口/低覆盖/stale 触发，异常价格先报告不自动停机。
 - S4 明确 L2 盘口历史不可回填；默认不启动持续 websocket，后续由调度/配置显式开启。
 - S5 特征 warmup 使用 `None`，策略层必须显式处理不可用特征。
+- S6 策略只生成候选信号，不具备审批、仓位或执行权限；策略注册和 verifier 留到 S9。
