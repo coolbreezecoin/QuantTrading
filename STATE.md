@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：S3 完成，准备进入 S4
+- 阶段：S4 完成，准备进入 S5
 - 进行中 step：无
-- **下一步：S4 — 数据层：盘口与资金费率采集器（前向）**
+- **下一步：S5 — 特征库**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -27,6 +27,10 @@
   - 完成时间：2026-06-27T12:33:10Z
   - 产物：缺口/重复/异常价格/时间栅格/stale 检测、Data Health loop、`cql-data-health` CLI、健康报告 JSON。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；对 S2 DuckDB 跑真实健康报告，最近 90 天覆盖率 100%、缺口 0、重复 0、halt=false。
+- S4 — 数据层：盘口与资金费率采集器（前向）
+  - 完成时间：2026-06-27T12:35:41Z
+  - 产物：前向盘口 snapshot 模型、DuckDB schema、异步 collector 重连逻辑、资金费率 perp_only 落库、`docs/forward-market-data.md`。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；fake websocket 断线后可重连，盘口与资金费率 schema 可落库。
 
 ## 阻塞 / 未决问题
 
@@ -45,3 +49,4 @@
 - S1 配置加载只保留密钥环境变量名，不读取真实密钥值。
 - S2 历史数据产物位于 `data/` 与 `reports/`，按 `.gitignore` 不入库；代码与审计状态入库。
 - S3 的 `halt_required` 当前只按 `auto_halt_on.data_gap` 对缺口/低覆盖/stale 触发，异常价格先报告不自动停机。
+- S4 明确 L2 盘口历史不可回填；默认不启动持续 websocket，后续由调度/配置显式开启。
