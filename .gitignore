@@ -12,8 +12,10 @@ reports/
 *.parquet
 *.duckdb
 *.db
-loop-run-log.jsonl
-build-log.jsonl
+
+# Loop 协议审计日志需要入库，便于断点续跑与人工审计。
+!loop-run-log.jsonl
+!build-log.jsonl
 
 # Python
 __pycache__/
