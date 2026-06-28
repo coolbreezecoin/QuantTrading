@@ -16,6 +16,7 @@ from crypto_quant_loop.data.structural import (
     coerce_mark_ohlcv_rows,
     derive_basis_samples,
     fetch_historical_funding_rates,
+    fetch_paged_historical_funding_rates,
     load_basis_samples_from_duckdb,
     run_structural_data_health_loop,
     to_ccxt_perp_symbol,
@@ -27,15 +28,18 @@ class FakeFundingClient(FundingHistoryClient):
     def __init__(self, pages: list[list[dict[str, object]]]) -> None:
         self.pages = pages
         self.calls: list[int | None] = []
+        self.params_calls: list[Mapping[str, object] | None] = []
 
     def fetch_funding_rate_history(
         self,
         symbol: str,
         since: int | None = None,
         limit: int | None = None,
+        params: Mapping[str, object] | None = None,
     ) -> list[Mapping[str, object]]:
         del symbol, limit
         self.calls.append(since)
+        self.params_calls.append(params)
         if not self.pages:
             return []
         return cast(list[Mapping[str, object]], self.pages.pop(0))
@@ -95,6 +99,30 @@ def test_fetch_historical_funding_rates_pages_and_deduplicates() -> None:
     assert [rate.rate for rate in rates] == [0.0001, 0.0002, -0.00005]
     assert client.calls == [0, eight_hours + 1]
     assert all(rate.market_type == "perp_only" for rate in rates)
+
+
+def test_fetch_paged_funding_rates_uses_page_param_until_empty() -> None:
+    eight_hours = 8 * 3_600_000
+    client = FakeFundingClient(
+        pages=[
+            [{"timestamp": eight_hours * 2, "fundingRate": 0.0002}],
+            [{"timestamp": eight_hours, "fundingRate": 0.0001}],
+            [],
+        ]
+    )
+
+    rates = fetch_paged_historical_funding_rates(
+        client=client,
+        exchange="mexc",
+        symbol="BTCUSDT",
+        until_ms=eight_hours * 3,
+        retry_sleep_s=0,
+        max_pages=5,
+    )
+
+    assert [rate.timestamp_ms for rate in rates] == [eight_hours, eight_hours * 2]
+    assert client.calls == [None, None, None]
+    assert client.params_calls == [{"page_num": 1}, {"page_num": 2}, {"page_num": 3}]
 
 
 def test_derive_basis_samples_aligns_spot_and_mark() -> None:

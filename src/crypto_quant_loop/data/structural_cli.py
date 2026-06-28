@@ -14,6 +14,8 @@ from crypto_quant_loop.data.structural import (
     build_structural_quality_report,
     derive_basis_samples,
     fetch_historical_funding_rates,
+    fetch_paged_historical_funding_rates,
+    load_basis_samples_from_duckdb,
     save_structural_quality_report,
     write_basis_samples_duckdb,
 )
@@ -29,6 +31,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--exchange", default="okx")
     parser.add_argument("--lookback-days", type=int, default=None)
     parser.add_argument("--limit", type=int, default=100)
+    parser.add_argument("--funding-only", action="store_true")
+    parser.add_argument("--funding-mode", choices=["since", "paged"], default="since")
+    parser.add_argument("--funding-page-param", default="page_num")
+    parser.add_argument("--max-pages", type=int, default=100)
     return parser
 
 
@@ -59,38 +65,51 @@ def main(argv: Sequence[str] | None = None) -> int:
     all_basis = []
     for symbol in configs.risk_policy.symbols.research:
         timeframe = configs.symbols.symbols[symbol].timeframe
-        funding = fetch_historical_funding_rates(
-            client=funding_client,
-            exchange=args.exchange,
-            symbol=symbol,
-            since_ms=int(since.timestamp() * 1000),
-            until_ms=int(until.timestamp() * 1000),
-            limit=args.limit,
-        )
-        spot_bars = fetch_historical_ohlcv(
-            client=spot_client,
-            exchange=args.exchange,
-            symbol=symbol,
-            timeframe=timeframe,
-            since_ms=int(since.timestamp() * 1000),
-            until_ms=int(until.timestamp() * 1000),
-            limit=1000,
-        )
-        mark_bars = fetch_historical_ohlcv(
-            client=mark_client,
-            exchange=args.exchange,
-            symbol=symbol,
-            timeframe=timeframe,
-            since_ms=int(since.timestamp() * 1000),
-            until_ms=int(until.timestamp() * 1000),
-            limit=1000,
-        )
-        basis = derive_basis_samples(
-            spot_bars=spot_bars,
-            perp_mark_bars=mark_bars,
-            exchange=args.exchange,
-            symbol=symbol,
-        )
+        if args.funding_mode == "paged":
+            funding = fetch_paged_historical_funding_rates(
+                client=funding_client,
+                exchange=args.exchange,
+                symbol=symbol,
+                until_ms=int(until.timestamp() * 1000),
+                limit=args.limit,
+                page_param=args.funding_page_param,
+                max_pages=args.max_pages,
+            )
+        else:
+            funding = fetch_historical_funding_rates(
+                client=funding_client,
+                exchange=args.exchange,
+                symbol=symbol,
+                since_ms=int(since.timestamp() * 1000),
+                until_ms=int(until.timestamp() * 1000),
+                limit=args.limit,
+            )
+        basis = []
+        if not args.funding_only:
+            spot_bars = fetch_historical_ohlcv(
+                client=spot_client,
+                exchange=args.exchange,
+                symbol=symbol,
+                timeframe=timeframe,
+                since_ms=int(since.timestamp() * 1000),
+                until_ms=int(until.timestamp() * 1000),
+                limit=1000,
+            )
+            mark_bars = fetch_historical_ohlcv(
+                client=mark_client,
+                exchange=args.exchange,
+                symbol=symbol,
+                timeframe=timeframe,
+                since_ms=int(since.timestamp() * 1000),
+                until_ms=int(until.timestamp() * 1000),
+                limit=1000,
+            )
+            basis = derive_basis_samples(
+                spot_bars=spot_bars,
+                perp_mark_bars=mark_bars,
+                exchange=args.exchange,
+                symbol=symbol,
+            )
         all_funding.extend(funding)
         all_basis.extend(basis)
 
@@ -98,9 +117,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     write_funding_rates_duckdb(all_funding, db_path)
     write_basis_samples_duckdb(all_basis, db_path)
+    report_basis = load_basis_samples_from_duckdb(db_path) if args.funding_only else all_basis
     report = build_structural_quality_report(
         funding_rates=all_funding,
-        basis_samples=all_basis,
+        basis_samples=report_basis,
         basis_timeframe=configs.research.benchmarks.timeframe,
     )
     save_structural_quality_report(report, Path(args.report_path))

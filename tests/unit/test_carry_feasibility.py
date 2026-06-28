@@ -8,17 +8,18 @@ from crypto_quant_loop.data.funding import FundingRate
 from crypto_quant_loop.data.structural import BasisSample
 from crypto_quant_loop.research.carry import (
     analyze_carry_feasibility,
+    analyze_refined_carry_feasibility,
     carry_report_summary,
     cost_assumptions_from_configs,
     save_carry_feasibility_report,
 )
 
 
-def funding_series(symbol: str, rates: list[float]) -> list[FundingRate]:
+def funding_series(symbol: str, rates: list[float], exchange: str = "okx") -> list[FundingRate]:
     interval_ms = 8 * 3_600_000
     return [
         FundingRate(
-            exchange="okx",
+            exchange=exchange,
             symbol=symbol,
             timestamp_ms=index * interval_ms,
             rate=rate,
@@ -106,3 +107,48 @@ def test_report_serializes_summary(tmp_path: Path) -> None:
 
     assert payload["principal_grid"] == [500.0, 1000.0]
     assert summary["symbols"]["BTCUSDT"]["net_1000_quote"] < 0
+
+
+def test_refined_report_selects_longest_source_and_margin_sensitivity() -> None:
+    configs = load_all_configs(Path("config"))
+
+    report = analyze_refined_carry_feasibility(
+        funding_rates=[
+            *funding_series("BTCUSDT", [0.0001, 0.0001], exchange="okx"),
+            *funding_series(
+                "BTCUSDT",
+                [0.0001, -0.00005, 0.0002, 0.00005, 0.0001, -0.00002],
+                exchange="mexc",
+            ),
+        ],
+        basis_samples=basis_series("BTCUSDT"),
+        fills=configs.fills,
+        risk_policy=configs.risk_policy,
+        principal_grid=[1000],
+        margin_cost_aprs=[0.0, 0.03, 0.05],
+    )
+
+    symbol = report.symbols[0]
+    assert symbol.selected_exchange == "mexc"
+    assert [item.margin_cost_apr for item in symbol.sensitivities] == [0.0, 0.03, 0.05]
+    assert symbol.available_sources[0].exchange == "mexc"
+    assert symbol.sensitivities[0].break_even_lines[0].historical_event_frequency_pct >= 0
+
+
+def test_refined_conditional_carry_can_propose_entry_rule() -> None:
+    configs = load_all_configs(Path("config"))
+
+    report = analyze_refined_carry_feasibility(
+        funding_rates=funding_series("BTCUSDT", [0.003] * 12, exchange="mexc"),
+        basis_samples=basis_series("BTCUSDT"),
+        fills=configs.fills,
+        risk_policy=configs.risk_policy,
+        principal_grid=[1000],
+        margin_cost_aprs=[0.03],
+    )
+
+    assert report.conclusion == "edge_condition_found_stop_for_F3_confirmation"
+    assert report.proposed_entry_rules
+    result = report.symbols[0].sensitivities[0].conditional_results[0]
+    assert result.net_carry_quote > 0
+    assert result.episodes == 1
