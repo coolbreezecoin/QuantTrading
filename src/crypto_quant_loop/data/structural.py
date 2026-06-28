@@ -37,6 +37,7 @@ class FundingHistoryClient(Protocol):
         symbol: str,
         since: int | None = None,
         limit: int | None = None,
+        params: Mapping[str, object] | None = None,
     ) -> list[Mapping[str, object]]:
         """Fetch ccxt-shaped funding rows for a perpetual contract."""
         ...
@@ -64,11 +65,13 @@ class CcxtFundingHistoryClient:
         symbol: str,
         since: int | None = None,
         limit: int | None = None,
+        params: Mapping[str, object] | None = None,
     ) -> list[Mapping[str, object]]:
         rows = self._exchange.fetch_funding_rate_history(
             to_ccxt_perp_symbol(symbol),
             since=since,
             limit=limit,
+            params=dict(params or {}),
         )
         return cast(list[Mapping[str, object]], rows)
 
@@ -183,6 +186,7 @@ def fetch_historical_funding_rates(
             symbol=symbol,
             since=next_since,
             limit=limit,
+            params=None,
             max_retries=max_retries,
             retry_sleep_s=retry_sleep_s,
         )
@@ -209,6 +213,57 @@ def fetch_historical_funding_rates(
             break
 
         next_since = max(rate.timestamp_ms for rate in normalized) + 1
+
+    return sorted(rates, key=lambda item: item.timestamp_ms)
+
+
+def fetch_paged_historical_funding_rates(
+    *,
+    client: FundingHistoryClient,
+    exchange: str,
+    symbol: str,
+    until_ms: int,
+    interval_hours: float = 8.0,
+    limit: int = 100,
+    page_param: str = "page_num",
+    start_page: int = 1,
+    max_pages: int = 100,
+    max_retries: int = 3,
+    retry_sleep_s: float = 1.0,
+) -> list[FundingRate]:
+    seen: set[int] = set()
+    rates: list[FundingRate] = []
+    for page in range(start_page, start_page + max_pages):
+        rows = _fetch_funding_with_retries(
+            client=client,
+            symbol=symbol,
+            since=None,
+            limit=limit,
+            params={page_param: page},
+            max_retries=max_retries,
+            retry_sleep_s=retry_sleep_s,
+        )
+        if not rows:
+            break
+
+        normalized = normalize_funding_rate_rows(
+            rows=rows,
+            exchange=exchange,
+            symbol=symbol,
+            interval_hours=interval_hours,
+        )
+        new_rows = 0
+        for rate in sorted(normalized, key=lambda item: item.timestamp_ms):
+            if rate.timestamp_ms >= until_ms:
+                continue
+            if rate.timestamp_ms in seen:
+                continue
+            seen.add(rate.timestamp_ms)
+            rates.append(rate)
+            new_rows += 1
+
+        if new_rows == 0:
+            break
 
     return sorted(rates, key=lambda item: item.timestamp_ms)
 
@@ -489,15 +544,21 @@ def _fetch_funding_with_retries(
     *,
     client: FundingHistoryClient,
     symbol: str,
-    since: int,
+    since: int | None,
     limit: int,
+    params: Mapping[str, object] | None,
     max_retries: int,
     retry_sleep_s: float,
 ) -> list[Mapping[str, object]]:
     last_error: Exception | None = None
     for attempt in range(max_retries + 1):
         try:
-            return client.fetch_funding_rate_history(symbol, since=since, limit=limit)
+            return client.fetch_funding_rate_history(
+                symbol,
+                since=since,
+                limit=limit,
+                params=params,
+            )
         except Exception as exc:  # pragma: no cover - exact ccxt errors vary by exchange
             last_error = exc
             if attempt >= max_retries:
