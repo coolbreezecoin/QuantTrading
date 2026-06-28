@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Literal
 
 import duckdb
@@ -15,9 +17,13 @@ class FundingRate:
     interval_hours: float
     market_type: Literal["perp_only"] = "perp_only"
 
+    @property
+    def timestamp(self) -> datetime:
+        return datetime.fromtimestamp(self.timestamp_ms / 1000, tz=UTC)
 
-def write_funding_rates_duckdb(rates: list[FundingRate], db_path: str) -> None:
-    con = duckdb.connect(db_path)
+
+def write_funding_rates_duckdb(rates: list[FundingRate], db_path: str | Path) -> None:
+    con = duckdb.connect(str(db_path))
     try:
         con.execute(
             """
@@ -49,4 +55,3 @@ def write_funding_rates_duckdb(rates: list[FundingRate], db_path: str) -> None:
             )
     finally:
         con.close()
-
