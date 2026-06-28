@@ -4,9 +4,9 @@
 
 ## 当前
 
-- 阶段：R6 完成，第二阶段研究 Loop 停止等待人工
+- 阶段：F1 完成，第三阶段结构性 edge Loop 正在推进
 - 进行中 step：无
-- **下一步：等待人工复核 R1-R6 研究结论；当前没有拟批准策略**
+- **下一步：F2 — edge 量化与可行性；若扣全部成本后净 carry 不成立，或仅在远超 1000 USDT 时成立，则暂停 F3 等待人工决定**
 - 运行模式：plumbing_test（1000 USDT / A 案，见 `config/risk-policy.yaml`）
 
 ## 已完成 step
@@ -96,11 +96,17 @@
   - 完成时间：2026-06-27T14:40:17Z
   - 产物：robustness battery、R6 verifier submission report、`reports/r6_robustness_and_verifier.json`、`reports/r6_verifier_results.jsonl`、`strategy-registry.yaml` rejected 审计条目。
   - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过；四个候选均 verifier rejected，未出现拟批准策略。
+- F1 — 结构性数据层（历史可回填，与 L2 盘口不同）
+  - 完成时间：2026-06-28T00:36:10Z
+  - 产物：research-only 结构性数据模块、资金费率历史分页拉取、perp mark OHLCV 适配、mark-spot 基差样本、DuckDB 落库、结构性 Data Health 报告、`cql-fetch-structural` CLI、`docs/structural-market-data.md`。
+  - 真实数据：OKX public basis 1h 覆盖 BTC/ETH/SOL 各 12,960 条（2025-01-04 至 2026-06-28，coverage 100%）；OKX public funding 在交易所可得窗口内 coverage 100%，BTC 312 条（2026-03-16 起），ETH/SOL 各 291 条（2026-03-23 起）。
+  - 验证：`uv run ruff check .`、`uv run mypy`、`uv run pytest`、`uv run python scripts/secret_scan.py` 全部通过（76 passed）；新 CLI help 可运行；未修改 `config/risk-policy.yaml`、`config/exchanges.yaml`、策略 registry 或任何交易权限。
 
 ## 阻塞 / 未决问题
 
 - Binance 公共 REST 在当前网络位置返回 451 地域限制；S2 使用 OKX 公共 REST 完成历史数据落库。未启用 OKX 交易权限，也未读取任何密钥。
 - S3 按当前 `price_deviation_bps=200` 将部分 1h 大波动标为 abnormal price；这只是报告项，不触发 data_gap halt。阈值属于风控配置，未人工批准前不调整。
+- F1 OKX public funding history 的可回填窗口短于 540 天：BTC 当前回到 2026-03-16，ETH/SOL 当前回到 2026-03-23；F2 必须按这个真实可得窗口诚实量化，不得把 basis 的 540 天覆盖误当作 funding 覆盖。
 
 ## 等待人工
 
@@ -108,6 +114,7 @@
 - 开启真金白银交易是 S14 之外的独立门禁，至少需同时满足：(a) 有策略通过 verifier 被 `approved`，(b) Fill-Fidelity 偏差验证通过，(c) 人工再次显式批准。
 - R 阶段允许继续做 research/report-only 工作；不得把任何候选策略自我批准为 `approved`，也不得设置正数 `max_notional_quote`。
 - R6 未产生拟批准策略，因此未触发 A-002 人工批准流程；所有新增 research 候选在 registry 中保持 `rejected` 且 `max_notional_quote=0`。
+- F 阶段当前仅做 research/report-only 结构性 edge 研究；永续、做空、杠杆只存在于研究数据/回测代码，不得写入生产 `config/risk-policy.yaml` 或 `config/exchanges.yaml`，不得启用实盘。
 
 ## 最近决策
 
@@ -140,3 +147,4 @@
 - R4 结果：`regime_switch_existing` OOS 聚合约 +0.08%，因 BTC 基准很差而通过 R1 beat 谓词，但 verifier rejected（Sharpe decay、交易数、正 OOS 段不足），不得批准。
 - R5 结果：候选组合按 25% 方向性敞口 cap 后 OOS 聚合约 -0.12%，年化约 -0.11%，max drawdown 约 0.32%，Sharpe 约 -0.39；未跑赢 R1 口径，且无 verifier-approved 组件，因此不可部署。
 - R6 终检：`robust_momentum_breakout`、`robust_mean_reversion`、`volatility_target_trend`、`regime_switch_existing` 均被 verifier rejected；共同问题是 OOS Sharpe decay、交易数不足、正 OOS 段不足或扣费后不盈利，robustness battery 左尾/成本敏感性也未过。
+- F1 决策：结构性数据层保持 research-only；funding 与 basis 可历史回填并落库，L2 orderbook depth 继续 forward-only，open interest 暂不采集。OKX funding 可得窗口短于 basis，F2 以实际 funding 覆盖窗口为准。
