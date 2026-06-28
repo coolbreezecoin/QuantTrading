@@ -78,27 +78,26 @@ crypto-quant-loop/
 环境:Python ≥ 3.12,用 [uv](https://github.com/astral-sh/uv) 管理。
 
 ```bash
-uv sync          # 安装依赖
-make help        # 查看所有可用命令
-make check       # lint + 类型 + 测试 + 密钥扫描(当前 83 passed)
+uv sync --extra dev                  # 安装依赖(含 ruff/mypy/pytest 等 dev 工具)
+uv run ruff check .                  # lint
+uv run mypy                          # 类型检查
+uv run pytest                        # 测试(当前 83 passed)
+uv run python scripts/secret_scan.py # 密钥扫描
 ```
 
 命令行任务(均为只读 / 研究用途,走交易所**公开**数据,不下真实单):
 
 ```bash
-make empty-loop        # 运行空 loop,写 loop-run-log.jsonl
-make fetch-ohlcv       # 拉取历史 OHLCV 到 DuckDB/Parquet
-make data-health       # 数据健康报告(缺口/重复/异常)
-make fetch-structural  # 拉取 funding / basis 结构性数据
-make carry             # 资金费率 carry 可行性分析
+uv run cql-empty-loop          # 运行空 loop,写 loop-run-log.jsonl
+uv run cql-fetch-ohlcv         # 拉取历史 OHLCV 到 DuckDB/Parquet
+uv run cql-data-health         # 数据健康报告(缺口/重复/异常)
+uv run cql-fetch-structural    # 拉取 funding / basis 结构性数据
+uv run cql-carry-feasibility   # 资金费率 carry 可行性分析
 ```
 
-> ⚠️ **目录名含空格的坑**:本项目路径是 `…/Loop Engineering/`,空格会破坏 uv 的 editable 安装,导致直接 `uv run cql-*` 报 `ModuleNotFoundError: No module named 'crypto_quant_loop'`。
-> `Makefile` 已用 `PYTHONPATH=src uv run --no-sync …` 绕过,所以**请用 `make` 命令**。若想脱离 make,手动跑也要带上前缀,例如:
-> ```bash
-> PYTHONPATH=src uv run --no-sync cql-data-health
-> ```
-> **永久解法**:把项目移到不含空格的路径(如 `~/code/QuantTrading`),之后普通 `uv run cql-*` 即可正常工作。
+> 也可以用 `make`(可选便捷入口):`make help` 看全部命令,`make check` 一次跑完 lint+类型+测试+密钥扫描。
+>
+> ⚠️ **不要把项目放在含空格的路径下**(如 `…/Loop Engineering/`)——空格会破坏 uv 的 editable 安装,导致 `uv run cql-*` 报 `ModuleNotFoundError`。请放在无空格路径(如 `~/code/QuantTrading`)。
 
 > 数据采集无需密钥。涉及账户/下单的真实联调需自行在本地 `.env` 提供**无提现 + IP 白名单**的 key,且仅在你明确解除 dry-run 门禁后——本仓库默认不做这件事。
 
